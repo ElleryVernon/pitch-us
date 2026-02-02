@@ -1,0 +1,17 @@
+{
+  "description": "Minimal, investor-first layouts with clear hierarchy.",
+  "ordered": true,
+  "default": false,
+  "layoutOrder": [
+    "intro-slide.tsx",
+    "problem-slide.tsx",
+    "solution-slide.tsx",
+    "market-slide.tsx",
+    "competition-slide.tsx",
+    "business-model-slide.tsx",
+    "traction-slide.tsx",
+    "team-slide.tsx",
+    "roadmap-slide.tsx",
+    "ask-slide.tsx"
+  ]
+}

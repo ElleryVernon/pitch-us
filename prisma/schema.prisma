@@ -1,0 +1,194 @@
+/**
+ * Prisma database schema for the presentation application.
+ *
+ * Defines the database models and relationships for presentations, slides,
+ * images, templates, layout codes, and webhook subscriptions. Uses PostgreSQL
+ * as the database provider and generates Prisma Client to the specified output
+ * directory.
+ */
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * Presentation model.
+ *
+ * Represents a complete presentation with its metadata, configuration,
+ * and associated slides. Stores generation parameters, outlines, layout
+ * information, and file metadata.
+ *
+ * @property id - Unique identifier (UUID).
+ * @property content - User-provided prompt/content for generation.
+ * @property n_slides - Number of slides requested/generated.
+ * @property language - Language code for content generation.
+ * @property document_content - Extracted text from uploaded documents (optional).
+ * @property file_metadata - JSON string with uploaded file metadata (optional).
+ * @property tone - Tone/style for content generation (optional).
+ * @property verbosity - Detail level for content (optional).
+ * @property instructions - Additional generation instructions (optional).
+ * @property include_table_of_contents - Whether to include TOC slide.
+ * @property include_title_slide - Whether to include title slide.
+ * @property web_search - Whether web search was enabled.
+ * @property outlines - JSON string with outline slide data (optional).
+ * @property layout - JSON string with layout information (optional).
+ * @property structure - JSON string with presentation structure (optional).
+ * @property title - Presentation title (optional).
+ * @property created_at - Timestamp when presentation was created.
+ * @property updated_at - Timestamp when presentation was last updated.
+ * @property slides - Related Slide records (one-to-many).
+ * @property layout_codes - Related PresentationLayoutCode records (one-to-many).
+ */
+model Presentation {
+  id                        String    @id
+  content                   String
+  n_slides                  Int
+  language                  String
+  document_content          String?   // Extracted text content from uploaded files
+  file_metadata             String?   // JSON string: Array<{name, size, type}>
+  tone                      String?
+  verbosity                 String?
+  instructions              String?
+  include_table_of_contents Boolean   @default(false)
+  include_title_slide       Boolean   @default(true)
+  web_search                Boolean   @default(false)
+  outlines                  String?   // JSON string
+  layout                    String?   // JSON string
+  structure                 String?   // JSON string
+  title                     String?
+  created_at                DateTime  @default(now())
+  updated_at                DateTime  @default(now()) @updatedAt
+
+  slides                    Slide[]
+  layout_codes              PresentationLayoutCode[]
+
+  @@index([created_at])
+  @@map("presentations")
+}
+
+/**
+ * Slide model.
+ *
+ * Represents a single slide within a presentation. Stores slide content,
+ * layout information, speaker notes, and position within the presentation.
+ *
+ * @property id - Unique identifier (UUID).
+ * @property presentation - Foreign key to Presentation.id.
+ * @property layout_group - Template/layout group identifier (optional).
+ * @property layout - Layout identifier for this slide (optional).
+ * @property slide_index - Zero-based index of slide in presentation.
+ * @property speaker_note - Speaker notes for this slide (optional).
+ * @property content - JSON string with slide content/data (optional).
+ * @property html_content - HTML content for the slide (optional).
+ * @property created_at - Timestamp when slide was created.
+ * @property presentationRef - Relation to parent Presentation.
+ */
+model Slide {
+  id              String       @id
+  presentation    String
+  layout_group    String?
+  layout          String?
+  slide_index     Int
+  speaker_note    String?
+  content         String?      // JSON string
+  html_content    String?
+  created_at      DateTime     @default(now())
+
+  presentationRef Presentation @relation(fields: [presentation], references: [id], onDelete: Cascade)
+
+  @@index([presentation])
+  @@index([presentation, slide_index])
+  @@map("slides")
+}
+
+/**
+ * Image asset model.
+ *
+ * Represents an image asset (uploaded or generated) used in presentations.
+ * Tracks the file path and whether it was uploaded by a user or generated.
+ *
+ * @property id - Unique identifier (UUID).
+ * @property path - File path or URL to the image.
+ * @property is_uploaded - Whether the image was uploaded by a user
+ *   (true) or generated (false).
+ * @property created_at - Timestamp when image was created.
+ */
+model ImageAsset {
+  id          String   @id
+  path        String
+  is_uploaded Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  @@index([is_uploaded, created_at(sort: Desc)])
+  @@map("image_assets")
+}
+
+model Template {
+  id          String   @id
+  name        String
+  description String?
+  ordered     Boolean  @default(false)
+  slides      String?  // JSON string
+  created_at  DateTime @default(now())
+
+  @@map("templates")
+}
+
+/**
+ * Presentation layout code model.
+ *
+ * Stores compiled layout component code for custom layouts used in a
+ * presentation. Allows presentations to use custom layouts that are
+ * dynamically compiled and cached.
+ *
+ * @property id - Unique identifier (UUID).
+ * @property presentation - Foreign key to Presentation.id.
+ * @property layout_id - Unique identifier of the layout.
+ * @property layout_name - Human-readable layout name.
+ * @property layout_code - Source code for the layout component.
+ * @property fonts - JSON string with custom fonts used in layout (optional).
+ * @property created_at - Timestamp when layout code was created.
+ * @property updated_at - Timestamp when layout code was last updated.
+ * @property presentationRef - Relation to parent Presentation.
+ */
+model PresentationLayoutCode {
+  id           String   @id
+  presentation String
+  layout_id    String
+  layout_name  String
+  layout_code  String
+  fonts        String?  // JSON string
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now()) @updatedAt
+
+  presentationRef Presentation @relation(fields: [presentation], references: [id], onDelete: Cascade)
+
+  @@index([presentation])
+  @@map("presentation_layout_codes")
+}
+
+/**
+ * Webhook subscription model.
+ *
+ * Represents a webhook subscription for receiving events from the
+ * presentation system. Stores the callback URL and subscribed events.
+ *
+ * @property id - Unique identifier (UUID).
+ * @property url - Webhook callback URL.
+ * @property events - JSON string with array of subscribed event types (optional).
+ * @property created_at - Timestamp when subscription was created.
+ */
+model WebhookSubscription {
+  id         String   @id
+  url        String
+  events     String?  // JSON string
+  created_at DateTime @default(now())
+
+  @@index([url])
+  @@map("webhook_subscriptions")
+}

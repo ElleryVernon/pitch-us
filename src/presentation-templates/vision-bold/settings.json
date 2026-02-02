@@ -1,0 +1,17 @@
+{
+  "description": "Bold vision layouts with high-contrast emphasis.",
+  "ordered": true,
+  "default": true,
+  "layoutOrder": [
+    "intro-slide.tsx",
+    "problem-slide.tsx",
+    "solution-slide.tsx",
+    "market-slide.tsx",
+    "competition-slide.tsx",
+    "business-model-slide.tsx",
+    "traction-slide.tsx",
+    "team-slide.tsx",
+    "roadmap-slide.tsx",
+    "ask-slide.tsx"
+  ]
+}
